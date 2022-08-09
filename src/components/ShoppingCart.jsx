@@ -7,11 +7,45 @@ import ProductItem from "./ProductItem";
 import "../App.css";
 import CartItem from "./CartItem";
 import { TYPES } from "../actions/shoppingAction";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { validacionDelSelect } from "../validators/validators";
+import { useFirestore } from "../hooks/useFirestore";
 
 const ShoppingCart = () => {
+  //FIREBASE ------------------------------------------------------------------------------
+  const [data, error, loading, getData, getProductos] = useFirestore();
+  const loadingData = loading.getData && <p>Loading data..</p>;
+  const errorData = error && <p>{error}</p>;
+
+  useEffect(() => {
+    console.log("GetData");
+    getData();
+  }, []);
+
+  useEffect(() => {
+    getProductos("K3A18i");
+    console.log("obteniendo Datos");
+  }, []);
+
+  const obj = {};
+
+  data.map((item) => {
+    {
+      if (item.productos.length > 0) {
+        item.productos.forEach((producto) => {
+          const { categoria } = producto;
+          obj[categoria] = obj[categoria]
+            ? [...obj[categoria], producto]
+            : [producto];
+        });
+      } else {
+        return null;
+      }
+    }
+  });
+
+  //FIREBASE ------------------------------------------------------------------------------
   const [state, dispatch] = useReducer(shoppingReducer, shoppingInitialState);
   const { products, cart } = state;
 
@@ -24,27 +58,6 @@ const ShoppingCart = () => {
   const [pago, setPago] = useState("");
 
   // ENVIO DE MENSAJE -----------------------------------------------------------------------------
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-
-  //   const message = `Hola Tienda: Aramayo
-  //   Nombre: ${nombre}
-  //   Envio: ${envio}
-  //   ${cart.map((item) => {
-  //     return `
-  //     ${item.name} (${item.quantity}) ${item.price}
-  //     `;
-  //   })}
-  //   direccion: ${direccion}
-  //   pago: ${pago}
-  //   Total: ${PrecioTotal}
-  //   `;
-
-  //   console.log(message);
-
-  //   setMensaje(message);
-  // };
 
   // TYPES -----------------------------------------------------------------------------
 
@@ -135,6 +148,62 @@ const ShoppingCart = () => {
 
   return (
     <>
+      {/* <div>
+        <div className="flex flex-col items-center justify-center mt-24">
+          <div>
+            {loadingData}
+            {errorData}
+            <div className="text-white">
+              {console.log(data)}
+              {data.map((comercios) => (
+                <div key={comercios.id}>
+                  <p>{comercios.id}</p>
+                  <h2>{comercios.nombre}</h2>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div> */}
+
+      <div>
+        <h1 className="my-5 text-2xl font-semibold text-center">Productos</h1>
+        {data.map((item) => (
+          <div key={item.id}>
+            <h1 className="text-center">{item.nombre}</h1>
+          </div>
+        ))}
+
+        <div>
+          {Object.keys(obj).map((key) => (
+            <div className="flex flex-col gap-5 p-5 " key={key}>
+              <h3 className="font-semibold text-center uppercase">{key}</h3>
+              {obj[key].map((producto, index) => (
+                <div
+                  className="flex flex-col gap-2 p-3 bg-slate-800 rounded-xl "
+                  key={index}
+                >
+                  <h3 className="font-semibold">
+                    Nombre:{" "}
+                    <span className="font-normal">{producto.nombre}</span>
+                  </h3>
+                  <p className="font-semibold">
+                    Precio:{" "}
+                    <span className="font-normal">{producto.precio}</span>
+                  </p>
+                  <p className="font-semibold">
+                    Descripcion:
+                    <span className="font-normal"> {producto.descripcion}</span>
+                  </p>
+
+                  <p>ID: <span>{producto.id}</span></p>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {show ? (
         <div>
           <form onSubmit={handleSubmit(onSubmit)}>
